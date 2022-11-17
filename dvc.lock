@@ -1,0 +1,119 @@
+schema: '2.0'
+stages:
+  feature:
+    cmd: python src/featurize.py --config=params.yaml
+    deps:
+    - path: src/featurize.py
+      md5: 8a9f070c68a852133735337c2320c2cc
+      size: 556
+    params:
+      params.yaml:
+        featurization:
+          sent_type: spacy
+        global:
+          feature_dataset_path:
+          - data
+          - cuad
+          - features
+          - document_classification_train_test.json
+          model_path:
+          - data
+          - cuad
+          - models
+          - doc_classifier_sgd
+          raw_path:
+          - data
+          - cuad
+          - raw
+          - CUAD_v1
+    outs:
+    - path: data/cuad/features
+      md5: acd08a7282a470d1d666f61281c9ad6a.dir
+      size: 5
+      nfiles: 1
+  train:
+    cmd: python src/train.py --config=params.yaml
+    deps:
+    - path: data/cuad/features
+      md5: acd08a7282a470d1d666f61281c9ad6a.dir
+      size: 5
+      nfiles: 1
+    - path: src/train.py
+      md5: ddcf8c2dedf5f4479f1c5d355d8dd053
+      size: 872
+    params:
+      params.yaml:
+        global:
+          feature_dataset_path:
+          - data
+          - cuad
+          - features
+          - document_classification_train_test.json
+          model_path:
+          - data
+          - cuad
+          - models
+          - doc_classifier_sgd
+          raw_path:
+          - data
+          - cuad
+          - raw
+          - CUAD_v1
+        training:
+          max_ngram: 4
+          use_idf: true
+          random_state: 32
+          early_stopping: true
+          tol: 0.001
+          max_itr: 1200
+    outs:
+    - path: data/cuad/models
+      md5: fad86271718577c4a0f5d78402c20963.dir
+      size: 20
+      nfiles: 1
+  evaluate:
+    cmd: python src/evaluate.py --config=params.yaml
+    deps:
+    - path: data/cuad/features
+      md5: acd08a7282a470d1d666f61281c9ad6a.dir
+      size: 5
+      nfiles: 1
+    - path: data/cuad/models
+      md5: fad86271718577c4a0f5d78402c20963.dir
+      size: 20
+      nfiles: 1
+    - path: src/evaluate.py
+      md5: 6a313f40f9ddb89c1b24ea4bb03c4d70
+      size: 1546
+    params:
+      params.yaml:
+        evaluation:
+          conf_matrix_path:
+          - model_metrics
+          - confusion_matrix.png
+          metrics_path:
+          - model_metrics
+          - metrics.txt
+        global:
+          feature_dataset_path:
+          - data
+          - cuad
+          - features
+          - document_classification_train_test.json
+          model_path:
+          - data
+          - cuad
+          - models
+          - doc_classifier_sgd
+          raw_path:
+          - data
+          - cuad
+          - raw
+          - CUAD_v1
+    outs:
+    - path: model_metrics/confusion_matrix.png
+      md5: 7dd9bcaba0b0ae7eb45aeeaddb4d59d8
+      size: 20183
+    - path: model_metrics/metrics.txt
+      md5: f2f0915572dccf52d3a9c832f8f74474
+      size: 43

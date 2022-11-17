@@ -1,0 +1,66 @@
+name: Grid Search Experiment
+on:
+  push:
+    branches:
+      - "gridsearch*"
+    paths:
+      - "src/**"
+      - ".github/workflows/grid_search.yaml"
+      - "params.yaml"
+      - "dvc.*"
+      - "requirements.txt"
+jobs:
+  gridsearch:
+    runs-on: [ubuntu-latest]
+    # container: docker://dvcorg/cml-py3:latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      - uses: iterative/setup-cml@v1
+      - name: Environment Setup
+        run: |
+          pip install --upgrade pip 
+          pip install -r requirements.txt
+          # python -m spacy download en_core_web_lg
+      - name: DVC Pipeline
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AZURE_STORAGE_SAS_TOKEN: ${{ secrets.AZURE_STORAGE_SAS_TOKEN }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+        run: |
+          ## RUN DVC EXPERIMENT ##
+          dvc pull --run-cache -r cuad
+          python src/hyperparam_tuning/grid_search.py
+
+          dvc exp show --only-changed
+
+          dvc queue status
+
+          dvc queue start -v
+          sleep 10
+          while test $(dvc queue status | tail -n 1 | awk '{print $3}') != 0; do
+              echo "experiments running"
+              sleep 30
+          done
+          dvc queue status 
+
+          ## CREATE REPORT ##
+          cat <<EOF > report.md
+          # Grid Search experiment report - $(date)
+          ## Intro text
+          EOF
+          echo "## Experiments Metrics" >> report.md
+          dvc exp show  --only-changed --sort-by F1 --sort-order desc --md >> report.md
+
+
+          ## CREATE PR ##
+          cml pr create --skip-ci .
+
+
+          ## PUBLISH REPORT AS PR COMMENT ##
+          cml comment create --pr --publish --commit-sha=HEAD --token $REPO_TOKEN report.md

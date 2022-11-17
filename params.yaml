@@ -1,0 +1,32 @@
+global:
+  feature_dataset_path:
+  - data
+  - cuad
+  - features
+  - document_classification_train_test.json
+  model_path:
+  - data
+  - cuad
+  - models
+  - doc_classifier_sgd
+  raw_path:
+  - data
+  - cuad
+  - raw
+  - CUAD_v1  
+featurization:
+  sent_type: spacy
+training:
+  max_ngram: 4
+  use_idf: true
+  random_state: 32
+  early_stopping: true
+  tol: 0.001
+  max_itr: 1200
+evaluation:
+  conf_matrix_path:
+  - model_metrics
+  - confusion_matrix.png
+  metrics_path:
+  - model_metrics
+  - metrics.txt

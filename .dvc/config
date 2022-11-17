@@ -1,0 +1,5 @@
+[core]
+    remote = cuad 
+['remote "cuad"']
+    url = azure://gridsearch
+    account_name = cookiecutter

@@ -1,0 +1,45 @@
+stages:
+  # download:
+  #   cmd: |
+  #     mkdir data/cuad/raw
+  #     curl "https://zenodo.org/record/4595826/files/CUAD_v1.zip?download=1" --output data/cuad/raw/cuad.zip
+  #     unzip data/cuad/raw/cuad.zip -d data/cuad/raw
+  #     rm data/cuad/raw/cuad.zip
+  #   outs:
+  #   - data/cuad/raw
+  feature:
+    cmd: python src/featurize.py --config=params.yaml
+    outs:
+    - data/cuad/features
+    deps:
+    # - data/cuad/raw
+    - src/featurize.py
+    params:
+      - global
+      - featurization
+  train:
+    cmd: python src/train.py --config=params.yaml
+    deps:
+    - data/cuad/features
+    - src/train.py
+    outs:
+    - data/cuad/models
+    params:
+    - global
+    - training
+  evaluate:
+    cmd: python src/evaluate.py --config=params.yaml
+    deps:
+    - data/cuad/features
+    - data/cuad/models
+    - src/evaluate.py
+    params:
+    - global
+    - evaluation
+
+    metrics:
+    - model_metrics/metrics.txt:
+        cache: false
+    plots:
+    - model_metrics/confusion_matrix.png:
+        cache: false
