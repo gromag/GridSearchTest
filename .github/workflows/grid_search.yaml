@@ -48,7 +48,15 @@ jobs:
               echo "experiments running"
               sleep 30
           done
-          dvc queue status 
+          dvc queue status
+          
+          # show all logs
+          for i in $(dvc queue status | awk '{
+          if ($1 != "" && $1 != "Worker" && $1 != "Task")
+            print $1
+          }'); do 
+            dvc queue logs $i
+          done
 
           ## CREATE REPORT ##
           cat <<EOF > report.md
